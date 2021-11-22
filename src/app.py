@@ -1,62 +1,171 @@
 import os
+from uuid import uuid4
 
-from flask import Flask, request, render_template, send_from_directory
-
+import matplotlib.pyplot as plt
+import numpy as np
+from deepface import DeepFace
+from flask import Flask, render_template, request, send_from_directory
+from keras.applications.imagenet_utils import preprocess_input
+from keras.layers import (Activation, Convolution2D, Dense, Dropout, Flatten,
+                          Input, MaxPooling2D, ZeroPadding2D)
+from keras.models import Model, Sequential, model_from_json
+from keras.preprocessing import image
+from keras.preprocessing.image import img_to_array, load_img, save_img
+from PIL import Image
+from time import time
+import shutil
 __author__ = 'ibininja'
 
 app = Flask(__name__)
+# app = Flask(__name__, static_folder="images")
 
+filename=""
+destination = ""
+model = Sequential()
+model.add(ZeroPadding2D((1,1),input_shape=(224,224, 3)))
+model.add(Convolution2D(64, (3, 3), activation='relu'))
+model.add(ZeroPadding2D((1,1)))
+model.add(Convolution2D(64, (3, 3), activation='relu'))
+model.add(MaxPooling2D((2,2), strides=(2,2)))
+
+model.add(ZeroPadding2D((1,1)))
+model.add(Convolution2D(128, (3, 3), activation='relu'))
+model.add(ZeroPadding2D((1,1)))
+model.add(Convolution2D(128, (3, 3), activation='relu'))
+model.add(MaxPooling2D((2,2), strides=(2,2)))
+
+model.add(ZeroPadding2D((1,1)))
+model.add(Convolution2D(256, (3, 3), activation='relu'))
+model.add(ZeroPadding2D((1,1)))
+model.add(Convolution2D(256, (3, 3), activation='relu'))
+model.add(ZeroPadding2D((1,1)))
+model.add(Convolution2D(256, (3, 3), activation='relu'))
+model.add(MaxPooling2D((2,2), strides=(2,2)))
+
+model.add(ZeroPadding2D((1,1)))
+model.add(Convolution2D(512, (3, 3), activation='relu'))
+model.add(ZeroPadding2D((1,1)))
+model.add(Convolution2D(512, (3, 3), activation='relu'))
+model.add(ZeroPadding2D((1,1)))
+model.add(Convolution2D(512, (3, 3), activation='relu'))
+model.add(MaxPooling2D((2,2), strides=(2,2)))
+
+model.add(ZeroPadding2D((1,1)))
+model.add(Convolution2D(512, (3, 3), activation='relu'))
+model.add(ZeroPadding2D((1,1)))
+model.add(Convolution2D(512, (3, 3), activation='relu'))
+model.add(ZeroPadding2D((1,1)))
+model.add(Convolution2D(512, (3, 3), activation='relu'))
+model.add(MaxPooling2D((2,2), strides=(2,2)))
+
+model.add(Convolution2D(4096, (7, 7), activation='relu'))
+model.add(Dropout(0.5))
+model.add(Convolution2D(4096, (1, 1), activation='relu'))
+model.add(Dropout(0.5))
+model.add(Convolution2D(2622, (1, 1)))
+model.add(Flatten())
+model.add(Activation('softmax'))
+model.summary()
 APP_ROOT = os.path.dirname(os.path.abspath(__file__))
-
 
 @app.route("/")
 def index():
     return render_template("upload.html")
 
-
 @app.route("/upload", methods=["POST"])
 def upload():
-    folder_name = request.form['superhero']
-    '''
-    # this is to verify that folder to upload to exists.
-    if os.path.isdir(os.path.join(APP_ROOT, 'files/{}'.format(folder_name))):
-        print("folder exist")
-    '''
-    target = os.path.join(APP_ROOT, 'files/{}'.format(folder_name))
+    global filename
+    global destination
+    target = os.path.join(APP_ROOT, 'images/')
+    # target = os.path.join(APP_ROOT, 'static/')
     print(target)
     if not os.path.isdir(target):
-        os.mkdir(target)
+            os.mkdir(target)
+    else:
+        print("Couldn't create upload directory: {}".format(target))
     print(request.files.getlist("file"))
     for upload in request.files.getlist("file"):
         print(upload)
         print("{} is the file name".format(upload.filename))
+    
         filename = upload.filename
-        # This is to verify files are supported
-        ext = os.path.splitext(filename)[1]
-        if (ext == ".jpg") or (ext == ".png"):
-            print("File supported moving on...")
-        else:
-            render_template("Error.html", message="Files uploaded are not supported...")
         destination = "/".join([target, filename])
-        print("Accept incoming file:", filename)
-        print("Save it to:", destination)
+        print ("Accept incoming file:", filename)
+        print ("Save it to:", destination)
         upload.save(destination)
-
+        print(filename)
     # return send_from_directory("images", filename, as_attachment=True)
-    return render_template("complete.html", image_name=filename)
-
+    return render_template("upload.html", image_name=filename)
 
 @app.route('/upload/<filename>')
 def send_image(filename):
     return send_from_directory("images", filename)
+def preprocess_image(image_path):
+    img = load_img(image_path, target_size=(224, 224))
+    img = img_to_array(img)
+    img = np.expand_dims(img, axis=0)
+    img = preprocess_input(img)
+    return img
+    
+def findCosineSimilarity(source_representation, test_representation):
+    a = np.matmul(np.transpose(source_representation), test_representation)
+    b = np.sum(np.multiply(source_representation, source_representation))
+    c = np.sum(np.multiply(test_representation, test_representation))
+    return 1 - (a / (np.sqrt(b) * np.sqrt(c)))
+def verifyFace(img1, img2):
+    model.load_weights("./simulation/vgg_face_weights.h5")
+    vgg_face_descriptor = Model(inputs=model.layers[0].input, outputs=model.layers[-2].output)
+    img1_representation = vgg_face_descriptor.predict(preprocess_image('%s' % (img1)))[0,:]
+    img2_representation = vgg_face_descriptor.predict(preprocess_image('%s' % (img2)))[0,:]
+    
+    cosine_similarity = findCosineSimilarity(img1_representation, img2_representation)
+    
+    print("Cosine similarity: ",cosine_similarity)
 
+    return cosine_similarity
 
-@app.route('/gallery')
-def get_gallery():
-    image_names = os.listdir('./images')
-    print(image_names)
-    return render_template("gallery.html", image_names=image_names)
+@app.route("/test/",methods=['POST'])
+def similarity_zoom():
+    print(1)
+    t = time()
+    print(destination)
+    req_image_zoom=DeepFace.detectFace(img_path= destination,detector_backend="opencv", enforce_detection=False)
+    print(2)
+    im =Image.fromarray((req_image_zoom * 255).astype(np.uint8))
+    im.save(destination)
+    path_req=destination
+    print(2)
+    cosinsim=[]
+    dir_path  = './simulation/train'
+    cwd = os.getcwd()
+    print(os.path.exists("/images"))
+    listDir = sorted(os.listdir(dir_path))#glob.glob(dir_path)
+    name=listDir
+    L_images=[]
+    for d in listDir:
+    #read subfolder
+        listFiles = sorted(os.listdir(dir_path+'/'+d))
+        L_images.append(listFiles)
+    print(os.path.exists('./images'))
 
+    for i in range (len(L_images)):
+        for j in range(len(L_images[i])):
+            path_img="./simulation/"+L_images[i][j]     #A changer
+            cosin=verifyFace(path_req, path_img)
+            cosinsim.append((cosin,i,j))
+    cosinsim.sort(key = lambda x: x[0])
+    path_ressemblance = './simulation/'+L_images[cosinsim[0][1]][cosinsim[0][2]]
+    # img = Image.open("/content/drive/MyDrive/projet partagé/simulation/"+L_images[cosinsim[0][1]][cosinsim[0][2]])    #A changer
+    target = os.path.join(APP_ROOT, 'images/')
+    print("path imaage _________ " +str(os.path.exists('./images')))
+    filename1 = L_images[cosinsim[0][1]][cosinsim[0][2]]
+    shutil.copyfile('./simulation/' +filename1 ,"src/images/" +filename1)
+    # print('paaaaaaaaath ____________         ' + filename + "________" + str(time()-t))
+    return render_template("upload.html",image_names=[filename, filename1])
 
+@app.route('/upload/<filename1>')
+def download_file(filename1):
+    print('____________sending_________________')
+    return send_from_directory("images", filename1)
 if __name__ == "__main__":
     app.run(port=4555, debug=True)

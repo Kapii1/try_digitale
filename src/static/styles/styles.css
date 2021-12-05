@@ -1,3 +1,39 @@
-button{
-    background-color: red;
+h1{
+    text-align: center;
+}
+.embed-responsive-item{
+    background-color: aqua;
+    width: 50%;
+    min-height: 300px;
+    margin: 10px;
+    border-radius: 10px;
+    overflow: hidden;
+    position: relative;
+}
+
+#image_2{
+    background-color: coral;
+}
+img{
+    position: absolute;
+    margin: auto;
+    height: 95%;
+    width: auto;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    right: 0;
+}
+.container{
+    display: flex;
+}
+
+.form-control{
+    align-content: center;
+}
+#upload{
+    margin: auto;
+    display: inline-block;
+    background-color: coral;
+    width: 100%;
 }

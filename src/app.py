@@ -20,6 +20,7 @@ app = Flask(__name__)
 # app = Flask(__name__, static_folder="images")
 
 filename=""
+img1_representation= ""
 destination = ""
 model = Sequential()
 model.add(ZeroPadding2D((1,1),input_shape=(224,224, 3)))
@@ -65,7 +66,8 @@ model.add(Dropout(0.5))
 model.add(Convolution2D(2622, (1, 1)))
 model.add(Flatten())
 model.add(Activation('softmax'))
-model.summary()
+somme=0
+vgg_face_descriptor = Model(inputs=model.layers[0].input, outputs=model.layers[-2].output)
 APP_ROOT = os.path.dirname(os.path.abspath(__file__))
 
 @app.route("/")
@@ -77,25 +79,16 @@ def upload():
     global filename
     global destination
     target = os.path.join(APP_ROOT, 'images/')
-    # target = os.path.join(APP_ROOT, 'static/')
-    print(target)
     if not os.path.isdir(target):
             os.mkdir(target)
     else:
         print("Couldn't create upload directory: {}".format(target))
-    print(request.files.getlist("file"))
     for upload in request.files.getlist("file"):
-        print(upload)
-        print("{} is the file name".format(upload.filename))
-    
         filename = upload.filename
         destination = "/".join([target, filename])
-        print ("Accept incoming file:", filename)
-        print ("Save it to:", destination)
         upload.save(destination)
-        print(filename)
     # return send_from_directory("images", filename, as_attachment=True)
-    return render_template("upload.html", image_name=filename)
+    return "Hello world!"
 
 @app.route('/upload/<filename>')
 def send_image(filename):
@@ -113,59 +106,54 @@ def findCosineSimilarity(source_representation, test_representation):
     c = np.sum(np.multiply(test_representation, test_representation))
     return 1 - (a / (np.sqrt(b) * np.sqrt(c)))
 def verifyFace(img1, img2):
-    model.load_weights("./simulation/vgg_face_weights.h5")
-    vgg_face_descriptor = Model(inputs=model.layers[0].input, outputs=model.layers[-2].output)
-    img1_representation = vgg_face_descriptor.predict(preprocess_image('%s' % (img1)))[0,:]
+    global img1_representation
+    global vgg_face_descriptor
+    global somme
     img2_representation = vgg_face_descriptor.predict(preprocess_image('%s' % (img2)))[0,:]
-    
+    t1= time()
     cosine_similarity = findCosineSimilarity(img1_representation, img2_representation)
-    
-    print("Cosine similarity: ",cosine_similarity)
-
+    somme+=time()- t1
     return cosine_similarity
 
 @app.route("/test/",methods=['POST'])
 def similarity_zoom():
-    print(1)
-    t = time()
-    print(destination)
+    global model
+    global img1_representation
+    global somme
+    t= time()
     req_image_zoom=DeepFace.detectFace(img_path= destination,detector_backend="opencv", enforce_detection=False)
-    print(2)
     im =Image.fromarray((req_image_zoom * 255).astype(np.uint8))
-    im.save(destination)
-    path_req=destination
+    destination_zooom = destination.split('.')[0] + '_zoomed.' +destination.split('.')[-1]
+    im.save(destination_zooom)
+    path_req=destination_zooom
     print(2)
     cosinsim=[]
     dir_path  = './simulation/train'
-    cwd = os.getcwd()
-    print(os.path.exists("/images"))
-    listDir = sorted(os.listdir(dir_path))#glob.glob(dir_path)
+    listDir = sorted(os.listdir(dir_path))
     name=listDir
     L_images=[]
+    model.load_weights("./simulation/vgg_face_weights.h5")
     for d in listDir:
-    #read subfolder
         listFiles = sorted(os.listdir(dir_path+'/'+d))
         L_images.append(listFiles)
-    print(os.path.exists('./images'))
-
+    img1_representation = vgg_face_descriptor.predict(preprocess_image('%s' % (path_req)))[0,:]
     for i in range (len(L_images)):
         for j in range(len(L_images[i])):
-            path_img="./simulation/"+L_images[i][j]     #A changer
+            path_img="./simulation/"+L_images[i][j]     
             cosin=verifyFace(path_req, path_img)
             cosinsim.append((cosin,i,j))
+    print(somme)
     cosinsim.sort(key = lambda x: x[0])
-    path_ressemblance = './simulation/'+L_images[cosinsim[0][1]][cosinsim[0][2]]
-    # img = Image.open("/content/drive/MyDrive/projet partagé/simulation/"+L_images[cosinsim[0][1]][cosinsim[0][2]])    #A changer
-    target = os.path.join(APP_ROOT, 'images/')
-    print("path imaage _________ " +str(os.path.exists('./images')))
     filename1 = L_images[cosinsim[0][1]][cosinsim[0][2]]
     shutil.copyfile('./simulation/' +filename1 ,"src/images/" +filename1)
-    # print('paaaaaaaaath ____________         ' + filename + "________" + str(time()-t))
+    print('time ____________         ' + str(time()-t))
     return render_template("upload.html",image_names=[filename, filename1])
 
 @app.route('/upload/<filename1>')
 def download_file(filename1):
     print('____________sending_________________')
     return send_from_directory("images", filename1)
+
+
 if __name__ == "__main__":
     app.run(port=4555, debug=True)

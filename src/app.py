@@ -1,10 +1,10 @@
 import os
 from uuid import uuid4
-
+import keras
 import matplotlib.pyplot as plt
 import numpy as np
 from deepface import DeepFace
-from flask import Flask, render_template, request, send_from_directory
+from flask import Flask, render_template, request, send_from_directory,jsonify
 from keras.applications.imagenet_utils import preprocess_input
 from keras.layers import (Activation, Convolution2D, Dense, Dropout, Flatten,
                           Input, MaxPooling2D, ZeroPadding2D)
@@ -14,11 +14,18 @@ from keras.preprocessing.image import img_to_array, load_img, save_img
 from PIL import Image
 from time import time
 import shutil
+from werkzeug.utils import secure_filename
+ 
 __author__ = 'ibininja'
 
 app = Flask(__name__)
 # app = Flask(__name__, static_folder="images")
+import tensorflow as tf
 
+
+config = tf.compat.v1.ConfigProto( device_count = {'GPU': 1 , 'CPU': 8} ) 
+sess = tf.compat.v1.Session(config=config) 
+keras.backend.set_session(sess)
 filename=""
 img1_representation= ""
 destination = ""
@@ -69,13 +76,60 @@ model.add(Activation('softmax'))
 somme=0
 vgg_face_descriptor = Model(inputs=model.layers[0].input, outputs=model.layers[-2].output)
 APP_ROOT = os.path.dirname(os.path.abspath(__file__))
-
+UPLOAD_FOLDER = 'static/files'
+app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 @app.route("/")
 def index():
-    return render_template("upload.html")
+    return render_template("index.html")
 
-@app.route("/upload", methods=["POST"])
+@app.route("/fff")
+def test():
+    print("test")
+    return('{1:1}')
+
+@app.route('/upload', methods=['POST'])
+def upload_file():
+    global destination
+    # check if the post request has the file part
+    print('________________')
+    if 'files[]' not in request.files:
+        resp = jsonify({'message' : 'No file part in the request'})
+        resp.status_code = 400
+        return resp
+     
+    files = request.files.getlist('files[]')
+     
+    errors = {}
+    success = False
+     
+    for file in files:
+        if file:
+            filename = secure_filename(file.filename)
+            print('______',os.path.join(app.config['UPLOAD_FOLDER'], filename))
+            destination= os.path.join(app.config['UPLOAD_FOLDER'], filename)
+            file.save(destination)
+            success = True
+            print(success)
+        else:
+            errors[file.filename] = 'File type is not allowed'
+     
+    if success and errors:
+        errors['message'] = 'File(s) successfully uploaded'
+        resp = jsonify(errors)
+        resp.status_code = 206
+        return resp
+    if success:
+        resp = jsonify({'message' : 'Files successfully uploaded'})
+        resp.status_code = 201
+        return resp
+    else:
+        resp = jsonify(errors)
+        resp.status_code = 400
+        return resp
+
+@app.route("/test", methods=["POST"])
 def upload():
+    print(4)
     global filename
     global destination
     target = os.path.join(APP_ROOT, 'images/')
@@ -83,9 +137,12 @@ def upload():
             os.mkdir(target)
     else:
         print("Couldn't create upload directory: {}".format(target))
+    print(request.files)
     for upload in request.files.getlist("file"):
+
         filename = upload.filename
-        destination = "/".join([target, filename])
+        print(filename)
+        destination = "/".join([target, filename.replace(" ","_")])
         upload.save(destination)
     # return send_from_directory("images", filename, as_attachment=True)
     return "Hello world!"
@@ -111,6 +168,7 @@ def verifyFace(img1, img2):
     global somme
     img2_representation = vgg_face_descriptor.predict(preprocess_image('%s' % (img2)))[0,:]
     t1= time()
+    print(1)
     cosine_similarity = findCosineSimilarity(img1_representation, img2_representation)
     somme+=time()- t1
     return cosine_similarity
@@ -126,28 +184,27 @@ def similarity_zoom():
     destination_zooom = destination.split('.')[0] + '_zoomed.' +destination.split('.')[-1]
     im.save(destination_zooom)
     path_req=destination_zooom
-    print(2)
     cosinsim=[]
-    dir_path  = './simulation/train'
+    dir_path  = '../simulation/train'
+    dirname = os.path.dirname(__file__)
     listDir = sorted(os.listdir(dir_path))
     name=listDir
     L_images=[]
-    model.load_weights("./simulation/vgg_face_weights.h5")
+    model.load_weights("../simulation/vgg_face_weights.h5")
     for d in listDir:
         listFiles = sorted(os.listdir(dir_path+'/'+d))
         L_images.append(listFiles)
     img1_representation = vgg_face_descriptor.predict(preprocess_image('%s' % (path_req)))[0,:]
     for i in range (len(L_images)):
         for j in range(len(L_images[i])):
-            path_img="./simulation/"+L_images[i][j]     
+            path_img="../simulation/"+L_images[i][j]     
             cosin=verifyFace(path_req, path_img)
             cosinsim.append((cosin,i,j))
-    print(somme)
     cosinsim.sort(key = lambda x: x[0])
     filename1 = L_images[cosinsim[0][1]][cosinsim[0][2]]
-    shutil.copyfile('./simulation/' +filename1 ,"src/images/" +filename1)
-    print('time ____________         ' + str(time()-t))
-    return render_template("upload.html",image_names=[filename, filename1])
+    
+    shutil.copyfile('../simulation/' +filename1 ,"static/files/" +filename1)
+    return ({'path_to_file': "static/files/" +filename1})
 
 @app.route('/upload/<filename1>')
 def download_file(filename1):
@@ -155,5 +212,5 @@ def download_file(filename1):
     return send_from_directory("images", filename1)
 
 
-if __name__ == "__main__":
-    app.run(port=4555, debug=True)
+if __name__ == '__main__':
+    app.run(port = 4555,debug=True)

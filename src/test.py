@@ -1,4 +1,2 @@
-import os
-cwd = os.getcwd()
-import shutil
-shutil.copy("./simulation/httpimagegaladevcmseamadonnaprivatdetektivsquaretopsquarejpgv.jpg","src/images/image2.png")
+from keras import backend
+print(backend._get_available_gpus())

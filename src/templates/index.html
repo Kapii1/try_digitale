@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Face Retrieval</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-EVSTQN3/azprG1Anm3QDgpJLIm9Nao0Yz1ztcQTwFspd3yD65VohhpuuCOmLASjC" crossorigin="anonymous">
+    <link rel="stylesheet" href="../static/styles/styles.css">
+    <meta charset="UTF-8">
+</head>
+<body>
+<div class="title">
+<h1>
+    Face Retrieval
+</h1>
+</div>
+<div id="consigne">
+    Vous voulez savoir à quelle star vous ressemblez ? Il suffit de télécharger une photo de vous ci-dessous et lancer le calcul !
+</div>
+<div id="upload" class="container">
+<input type="file" class="form-control" id="customFile" >
+<button id = "btn" type="button" class="btn btn-outline-primary">
+    Upload
+</button>
+<button id = "Calculer"> Calculer !</button>
+</div>
+
+<div class="container">
+
+<div id="image_1_container" class="embed-responsive-item">
+<img id="image_1">
+</div>
+
+<div id="image_2_container" class="embed-responsive-item">
+<img id="image_2">
+</div>
+</div>
+</body>
+<script type="text/javascript" src="https://code.jquery.com/jquery-3.4.1.min.js"></script>
+<script>
+   
+       $(document).ready(function (e) {
+        $('#Calculer').on('click', async function () {
+            var  test=await tr()
+            console.log("done")
+        });
+            function tr(){
+            $.ajax({
+                    url: '/test/', 
+                    dataType: 'json',
+                    cache: false,
+                    async: false,
+                    contentType: false,
+                    processData: false,
+                    data: {},
+                    type: 'post',
+                    success:function(response){
+                    var k=response;
+                    var img = document.getElementById('image_2');
+                    console.log(k.path_to_file);
+                    img.src = k.path_to_file
+                    }
+                })
+                setTimeout(() => {
+                 var img = document.getElementById('image_2')
+                                 
+                 }, 10000);
+
+            };
+
+
+            $('#btn').on('click', async function () {
+            var doc = await te()
+            console.log("___nom du fichier ___" + doc)
+            setTimeout(() => {
+                 var img = document.getElementById('image_1')
+                console.log( "static/files/" + doc.replaceAll(' ','_'))
+                img.src = "static/files/" + doc.replaceAll(' ','_')
+                 }, 50);
+
+            });
+
+        });
+
+        function te() {
+                var form_data = new FormData();
+                var ins = document.getElementById('customFile').files.length;
+                 
+                if(ins == 0) {
+                    $('#msg').html('<span style="color:red">Select at least one file</span>');
+                    return;
+                }
+                 
+                for (var x = 0; x < ins; x++) {
+                    form_data.append("files[]", document.getElementById('customFile').files[x]);
+                }
+               
+                $.ajax({
+                    url: '/upload', 
+                    dataType: 'json',
+                    cache: false,
+                    contentType: false,
+                    processData: false,
+                    data: form_data,
+                    type: 'post',
+                    success: function (response) { 
+                        $('#msg').html('');
+                        $.each(response, function (key, data) {                         
+                            if(key !== 'message') {
+                                $('#msg').append(key + ' -> ' + data + '<br/>');
+                            } else {
+                                $('#msg').append(data + '<br/>');
+                            }
+                        })
+                    },
+    
+                    error: function (response) {
+                        $('#msg').html(response.message); 
+                    }
+                    
+                });
+                console.log("done")
+                return document.getElementById('customFile').files[0].name
+        };
+</script>
+</html>

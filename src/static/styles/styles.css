@@ -1,13 +1,14 @@
+
+
 h1{
     text-align: center;
 }
 .embed-responsive-item{
     background-color: aqua;
-    width: 50%;
+    width: 100%;
     min-height: 300px;
     margin: 10px;
     border-radius: 10px;
-    overflow: hidden;
     position: relative;
 }
 
@@ -33,7 +34,16 @@ img{
 }
 #upload{
     margin: auto;
-    display: inline-block;
+    display: flex;
     background-color: coral;
     width: 100%;
+    padding: 1rem;
+}
+
+#consigne{
+    padding-top: 5%;
+    padding-bottom: 5%;
+    width: 75%;
+    margin: auto;
+    text-align: center;
 }

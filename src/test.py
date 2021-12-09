@@ -1,2 +1,5 @@
-from keras import backend
-print(backend._get_available_gpus())
+from functions import preprocess_image
+
+preprocess_image()
+
+

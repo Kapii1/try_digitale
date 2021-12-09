@@ -24,10 +24,10 @@
 
     <div id ='subcontainer-btn'>
 
-        <button id = "btn" type="button" class="btn btn-outline-primary">
+        <button id = "btn" type="button" class="btn_face">
             Upload
         </button>
-        <button id = "Calculer"  class="btn btn-outline-primary"> Calculer !</button>
+        <button id = "Calculer"  class="btn_face"> Calculer !</button>
 
     </div>
 </div>
@@ -52,33 +52,22 @@
             console.log("done")
         });
             function req_ressemblance(){
-                $(document).ajaxStart(function() {
-                    $(document.body).css({'cursor' : 'wait'});
-                }).ajaxStop(function() {
-                    $(document.body).css({'cursor' : 'default'});
-                });
             $.ajax({
-                    url: '/test/', 
+                    url: '/calcul/', 
                     dataType: 'json',
                     cache: false,
                     async: false,
                     contentType: false,
                     processData: false,
-                    data: {},
-                    type: 'post',
+                    type: 'get',
                     success:function(response){
-                    var k=response;
-                    var img = document.getElementById('image_2');
-                    console.log(k.path_to_file);
-                    img.src = k.path_to_file
-                    console.log('ressemblance__'+ k.ressemblance)
+                        var k=response;
+                        var img = document.getElementById('image_2');
+                        console.log(k.path_to_file);
+                        img.src = k.path_to_file
+                        console.log('ressemblance__'+ k.ressemblance)
                     }
                 })
-                setTimeout(() => {
-                 var img = document.getElementById('image_2')
-                                 
-                 }, 10000);
-
             };
 
 

@@ -119,7 +119,8 @@ def upload_file():
         resp.status_code = 206
         return resp
     if success:
-        resp = jsonify({'message' : 'Files successfully uploaded'})
+        resp = jsonify({'message' : 'Files successfully uploaded', 'path_to_file': destination})
+
         resp.status_code = 201
         return resp
     else:
@@ -168,7 +169,6 @@ def verifyFace(img1, img2):
     global somme
     img2_representation = vgg_face_descriptor.predict(preprocess_image('%s' % (img2)))[0,:]
     t1= time()
-    print(1)
     cosine_similarity = findCosineSimilarity(img1_representation, img2_representation)
     somme+=time()- t1
     return cosine_similarity
@@ -179,6 +179,7 @@ def similarity_zoom():
     global img1_representation
     global somme
     t= time()
+    print("start")
     req_image_zoom=DeepFace.detectFace(img_path= destination,detector_backend="opencv", enforce_detection=False)
     im =Image.fromarray((req_image_zoom * 255).astype(np.uint8))
     destination_zooom = destination.split('.')[0] + '_zoomed.' +destination.split('.')[-1]
@@ -202,9 +203,9 @@ def similarity_zoom():
             cosinsim.append((cosin,i,j))
     cosinsim.sort(key = lambda x: x[0])
     filename1 = L_images[cosinsim[0][1]][cosinsim[0][2]]
-    
+    print('done')
     shutil.copyfile('../simulation/' +filename1 ,"static/files/" +filename1)
-    return ({'path_to_file': "static/files/" +filename1})
+    return ({'path_to_file': "static/files/" +filename1,'ressemblance': 1-cosinsim[0][0]})
 
 @app.route('/upload/<filename1>')
 def download_file(filename1):
@@ -213,4 +214,4 @@ def download_file(filename1):
 
 
 if __name__ == '__main__':
-    app.run(port = 4555,debug=True)
+    app.run(host='0.0.0.0',debug=True, threaded=True)

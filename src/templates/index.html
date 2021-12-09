@@ -12,15 +12,24 @@
     Face Retrieval
 </h1>
 </div>
+
+
 <div id="consigne">
     Vous voulez savoir à quelle star vous ressemblez ? Il suffit de télécharger une photo de vous ci-dessous et lancer le calcul !
 </div>
-<div id="upload" class="container">
+
+
+<div id="upload">
 <input type="file" class="form-control" id="customFile" >
-<button id = "btn" type="button" class="btn btn-outline-primary">
-    Upload
-</button>
-<button id = "Calculer"> Calculer !</button>
+
+    <div id ='subcontainer-btn'>
+
+        <button id = "btn" type="button" class="btn btn-outline-primary">
+            Upload
+        </button>
+        <button id = "Calculer"  class="btn btn-outline-primary"> Calculer !</button>
+
+    </div>
 </div>
 
 <div class="container">
@@ -38,11 +47,16 @@
 <script>
    
        $(document).ready(function (e) {
-        $('#Calculer').on('click', async function () {
-            var  test=await tr()
+        $('#Calculer').on('click',  function () {
+            var  test= req_ressemblance()
             console.log("done")
         });
-            function tr(){
+            function req_ressemblance(){
+                $(document).ajaxStart(function() {
+                    $(document.body).css({'cursor' : 'wait'});
+                }).ajaxStop(function() {
+                    $(document.body).css({'cursor' : 'default'});
+                });
             $.ajax({
                     url: '/test/', 
                     dataType: 'json',
@@ -57,6 +71,7 @@
                     var img = document.getElementById('image_2');
                     console.log(k.path_to_file);
                     img.src = k.path_to_file
+                    console.log('ressemblance__'+ k.ressemblance)
                     }
                 })
                 setTimeout(() => {
@@ -69,14 +84,7 @@
 
             $('#btn').on('click', async function () {
             var doc = await te()
-            console.log("___nom du fichier ___" + doc)
-            setTimeout(() => {
-                 var img = document.getElementById('image_1')
-                console.log( "static/files/" + doc.replaceAll(' ','_'))
-                img.src = "static/files/" + doc.replaceAll(' ','_')
-                 }, 50);
-
-            });
+            console.log("___nom du fichier ___" + doc)            });
 
         });
 
@@ -110,6 +118,9 @@
                                 $('#msg').append(data + '<br/>');
                             }
                         })
+                        var resp = response;
+                        var img = document.getElementById('image_1');
+                        img.src = resp.path_to_file
                     },
     
                     error: function (response) {

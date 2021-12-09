@@ -1,6 +1,7 @@
 body{
     background: rgb(0,0,0);
-    background: linear-gradient(344deg, rgba(50,50,50,1) 0%, rgba(92,92,92,1) 70%, rgba(103,103,103,1) 100%);
+    background: no-repeat linear-gradient(344deg, rgba(50,50,50,1) 0%, rgba(92,92,92,1) 70%, rgba(103,103,103,1) 100%);
+
 }
 #btn{
     width: 10rem;
@@ -16,11 +17,17 @@ element{
     color: #FB4C0D;
     font-weight: bold;
     text-shadow: #FB4C0D 1px 0 10px;
-
+    transition: all 1s ease-out;
 }
 
 .btn_face:hover{
-    background-color: rgb(218, 218, 218);
+    background-color: #FB4C0D ;
+    color: white ;
+    border: solid #ffaa91;
+    text-shadow: white 1px 0 10px;
+}
+.btn_face:hover:after{
+    transition: 1s;
 }
 #Calculer{
     width: 12rem;

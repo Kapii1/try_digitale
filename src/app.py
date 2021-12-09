@@ -13,6 +13,7 @@ from keras.preprocessing import image
 from keras.preprocessing.image import img_to_array, load_img, save_img
 from PIL import Image
 from time import time
+from functions import preprocess_image, verifyFace, findCosineSimilarity
 import shutil
 from werkzeug.utils import secure_filename
  
@@ -78,6 +79,7 @@ vgg_face_descriptor = Model(inputs=model.layers[0].input, outputs=model.layers[-
 APP_ROOT = os.path.dirname(os.path.abspath(__file__))
 UPLOAD_FOLDER = 'static/files'
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
+
 @app.route("/")
 def index():
     return render_template("index.html")
@@ -123,22 +125,6 @@ def upload_file():
         resp.status_code = 400
         return resp
 
-    
-def findCosineSimilarity(source_representation, test_representation):
-    a = np.matmul(np.transpose(source_representation), test_representation)
-    b = np.sum(np.multiply(source_representation, source_representation))
-    c = np.sum(np.multiply(test_representation, test_representation))
-    return 1 - (a / (np.sqrt(b) * np.sqrt(c)))
-def verifyFace(img1, img2):
-    global img1_representation
-    global vgg_face_descriptor
-    global somme
-    img2_representation = vgg_face_descriptor.predict(preprocess_image('%s' % (img2)))[0,:]
-    t1= time()
-    cosine_similarity = findCosineSimilarity(img1_representation, img2_representation)
-    somme+=time()- t1
-    return cosine_similarity
-
 @app.route("/test/",methods=['GET'])
 def similarity_zoom():
     global model
@@ -165,13 +151,15 @@ def similarity_zoom():
     for i in range (len(L_images)):
         for j in range(len(L_images[i])):
             path_img="../simulation/"+L_images[i][j]     
-            cosin=verifyFace(path_req, path_img)
+            cosin=verifyFace(path_req, path_img,vgg_face_descriptor,img1_representation)
             cosinsim.append((cosin,i,j))
     cosinsim.sort(key = lambda x: x[0])
     filename1 = L_images[cosinsim[0][1]][cosinsim[0][2]]
     print('done')
     shutil.copyfile('../simulation/' +filename1 ,"static/files/" +filename1)
     return ({'path_to_file': "static/files/" +filename1,'ressemblance': 1-cosinsim[0][0]})
+
+
 
 if __name__ == '__main__':
     app.run(port='4555',debug=True, threaded=True)

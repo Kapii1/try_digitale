@@ -24,10 +24,10 @@
 
     <div id ='subcontainer-btn'>
 
-        <button id = "btn" type="button" class="btn btn-outline-primary">
+        <button id = "btn" type="button" class="btn_face">
             Upload
         </button>
-        <button id = "Calculer"  class="btn btn-outline-primary"> Calculer !</button>
+        <button id = "Calculer"  class="btn_face"> Calculer !</button>
 
     </div>
 </div>
@@ -52,11 +52,6 @@
             console.log("done")
         });
             function req_ressemblance(){
-                $(document).ajaxStart(function() {
-                    $(document.body).css({'cursor' : 'wait'});
-                }).ajaxStop(function() {
-                    $(document.body).css({'cursor' : 'default'});
-                });
                 fetch('/test/')
                 .then(response=>response.json())
                 .then(data=>{

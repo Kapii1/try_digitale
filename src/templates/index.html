@@ -57,23 +57,13 @@
                 }).ajaxStop(function() {
                     $(document.body).css({'cursor' : 'default'});
                 });
-            $.ajax({
-                    url: '/test/', 
-                    dataType: 'json',
-                    cache: false,
-                    async: false,
-                    contentType: false,
-                    processData: false,
-                    data: {},
-                    type: 'post',
-                    success:function(response){
-                    var k=response;
-                    var img = document.getElementById('image_2');
-                    console.log(k.path_to_file);
-                    img.src = k.path_to_file
-                    console.log('ressemblance__'+ k.ressemblance)
-                    }
-                })
+                fetch('/test/')
+                .then(response=>response.json())
+                .then(data=>{
+                    document.getElementById('image_2').src = data.path_to_file
+                    console.log(data)
+                }
+                )
                 setTimeout(() => {
                  var img = document.getElementById('image_2')
                                  

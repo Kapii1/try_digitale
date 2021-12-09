@@ -82,11 +82,6 @@ app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 def index():
     return render_template("index.html")
 
-@app.route("/fff")
-def test():
-    print("test")
-    return('{1:1}')
-
 @app.route('/upload', methods=['POST'])
 def upload_file():
     global destination
@@ -128,35 +123,6 @@ def upload_file():
         resp.status_code = 400
         return resp
 
-@app.route("/test", methods=["POST"])
-def upload():
-    print(4)
-    global filename
-    global destination
-    target = os.path.join(APP_ROOT, 'images/')
-    if not os.path.isdir(target):
-            os.mkdir(target)
-    else:
-        print("Couldn't create upload directory: {}".format(target))
-    print(request.files)
-    for upload in request.files.getlist("file"):
-
-        filename = upload.filename
-        print(filename)
-        destination = "/".join([target, filename.replace(" ","_")])
-        upload.save(destination)
-    # return send_from_directory("images", filename, as_attachment=True)
-    return "Hello world!"
-
-@app.route('/upload/<filename>')
-def send_image(filename):
-    return send_from_directory("images", filename)
-def preprocess_image(image_path):
-    img = load_img(image_path, target_size=(224, 224))
-    img = img_to_array(img)
-    img = np.expand_dims(img, axis=0)
-    img = preprocess_input(img)
-    return img
     
 def findCosineSimilarity(source_representation, test_representation):
     a = np.matmul(np.transpose(source_representation), test_representation)
@@ -173,7 +139,7 @@ def verifyFace(img1, img2):
     somme+=time()- t1
     return cosine_similarity
 
-@app.route("/test/",methods=['POST'])
+@app.route("/test/",methods=['GET'])
 def similarity_zoom():
     global model
     global img1_representation
@@ -207,11 +173,5 @@ def similarity_zoom():
     shutil.copyfile('../simulation/' +filename1 ,"static/files/" +filename1)
     return ({'path_to_file': "static/files/" +filename1,'ressemblance': 1-cosinsim[0][0]})
 
-@app.route('/upload/<filename1>')
-def download_file(filename1):
-    print('____________sending_________________')
-    return send_from_directory("images", filename1)
-
-
 if __name__ == '__main__':
-    app.run(host='0.0.0.0',debug=True, threaded=True)
+    app.run(port='4555',debug=True, threaded=True)

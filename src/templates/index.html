@@ -8,7 +8,7 @@
 </head>
 <body>
 <div class="title">
-<h1>
+<h1 id="title">
     Face Retrieval
 </h1>
 </div>
@@ -21,16 +21,18 @@
 
 <div id="upload">
 <input type="file" class="form-control" id="customFile" >
-    <div id="subcontainer-case">
-        <button type="button"></button>
-    </div>
+
     <div id ='subcontainer-btn'>
 
         <button id = "btn" type="button" class="btn_face">
-            Upload
+           <span class="btn_face__text">Upload</span>
         </button>
-        <button id = "Calculer"  class="btn_face"> Calculer !</button>
-
+        <button id = "Calculer"  class="btn_face">
+            <span class="btn_face__text">Calculer !</span>
+        </button>
+        <button id = "Morph"  class="btn_face">
+            <span class="btn_face__text">Morph !</span>
+        </button>
     </div>
 </div>
 
@@ -50,6 +52,7 @@
    
        $(document).ready(function (e) {
         $('#Calculer').on('click',  function () {
+            document.querySelector("#Calculer").classList.toggle('button--loading')
             var  test= req_ressemblance()
             console.log("done")
         });
@@ -58,7 +61,8 @@
                 .then(response=>response.json())
                 .then(data=>{
                     document.getElementById('image_2').src = data.path_to_file
-                    console.log(data)
+                    console.log(data);
+                    document.querySelector("#Calculer").classList.remove('button--loading')
                 }
                 )
                 setTimeout(() => {
@@ -67,9 +71,23 @@
                  }, 10000);
 
             };
+        $('#Morph').on('click',  function () {
+            document.querySelector("#Morph").classList.toggle('button--loading')
+            var  test= morph()
+            console.log("done")
+        });
+            function morph(){
+                fetch('/morph/')
+                .then(response=>response.json())
+                .then(data=>{                }
+                )
+                setTimeout(() => {
+                 }, 10000);
 
+            };
 
             $('#btn').on('click', async function () {
+
             var doc = await te()
             console.log("___nom du fichier ___" + doc)            });
 

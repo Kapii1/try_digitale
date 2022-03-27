@@ -8,7 +8,12 @@ from tensorflow.keras import backend as K
 import scipy
 
 import numpy as np
-
+def preprocess_image(image_path):
+    img = load_img(image_path, target_size=(224, 224))
+    img = img_to_array(img)
+    img = np.expand_dims(img, axis=0)
+    img = preprocess_input(img)
+    return img
 def deprocess_image(x):
     # Util function to convert a tensor into a valid image.
     if K.image_data_format() == 'channels_first':
@@ -24,12 +29,7 @@ def deprocess_image(x):
 def save_img(img, fname):
     pil_img = deprocess_image(np.copy(img))
     scipy.misc.imsave(fname, pil_img)
-def preprocess_image(image_path):
-    img = load_img(image_path, target_size=(224, 224))
-    img = img_to_array(img)
-    img = np.expand_dims(img, axis=0)
-    img = preprocess_input(img)
-    return img
+
     
 def findCosineSimilarity(source_representation, test_representation):
     a = np.matmul(np.transpose(source_representation), test_representation)

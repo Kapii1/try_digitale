@@ -104,7 +104,7 @@ vgg_face_descriptor = Model(inputs=model.layers[0].input, outputs=model.layers[-
 APP_ROOT = os.path.dirname(os.path.abspath(__file__))
 UPLOAD_FOLDER = 'static/files'
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
-
+run_with_ngrok(app)
 @app.route("/")
 def index():
     return render_template("index.html")
@@ -205,6 +205,66 @@ def similarity_zoom():
     shutil.copyfile(destination,"images/raw_images/temp."+ destination.split('.')[1] )
     return ({'path_to_file': "static/files/" +filename1,'ressemblance': 1-cos_list[0][0]})
 
+@app.route("/retrieval/",methods=['GET'])
+def similarity2():
+    req_image=destination
+    dir_path= "../simulation/lfw_funneled"
+    listDir = sorted(os.listdir(dir_path))
+    name=listDir
+    print(listDir)
+    L_images2=[]
+    for d in listDir:
+        listFiles = sorted(os.listdir(dir_path+'/'+d))
+        if 'desktop.ini' in listFiles:
+            listFiles.remove('desktop.ini')
+        if(len(L_images2)<200):
+            L_images2.append(listFiles)
+        else:
+            break
+    L_features=np.load('features3.npy')
+    cosinsim=[]
+    path=req_image
+    with graph.as_default():
+        set_session(sess)
+        req_representation = vgg_face_descriptor.predict(preprocess_image('%s' % (path)))[0,:] 
+    for i in range (len(L_images2)):
+        for j in range(len(L_images2[i])):
+            cosin=findCosineSimilarity(req_representation, L_features[i][j])    #A changer (deuxieme path)
+            cosinsim.append((cosin,i,j))
+    cosinsim.sort(key = lambda x: x[0])
+    print(cosinsim[0][1])
+    img = Image.open("../simulation/lfw_funneled/" + name[cosinsim[0][1]] +"/"+L_images2[cosinsim[0][1]][cosinsim[0][2]]) 
+    path="../simulation/lfw_funneled/" + name[cosinsim[0][1]] +"/"+L_images2[cosinsim[0][1]][cosinsim[0][2]]  
+    filename1=name[cosinsim[0][1]] +"/"+L_images2[cosinsim[0][1]][cosinsim[0][2]]
+    file=L_images2[cosinsim[0][1]][cosinsim[0][2]]
+    shutil.copyfile('../simulation/lfw_funneled/' +filename1 ,"static/files/" +file)
+    shutil.rmtree('images/raw_images')
+    shutil.rmtree('images/aligned_images')
+    os.mkdir('images/aligned_images')
+    os.mkdir('images/raw_images')
+    shutil.copyfile(destination,"images/raw_images/temp."+ destination.split('.')[1] )
+    shutil.copyfile("static/files/" +file,"images/raw_images/"+file )
+    if 'zoom' in file :
+        file= file.replace('_zoom','')
+    shutil.copyfile('../simulation/lfw_funneled/'+name[cosinsim[0][1]] +"/"+ file,"static/files/"+file )
+    print('________' , os.path.exists('images/raw_images/'))
+    path = "static/files/" +file
+    name =  name[cosinsim[0][1]].split('_')
+    Name=""
+    for i in name:
+        Name += i +" "
+    print(path)
+    return {'path_to_file': path ,'name': Name}
+
+
+
+
+
+
+
+
+
+
 def extract_features():
     dir_path= "../simulation/train"
     listDir = sorted(os.listdir(dir_path))
@@ -232,22 +292,73 @@ def extract_features():
     print(L_features_zoom)
     np.save('features.npy', L_features_zoom, allow_pickle=True)
 
+@app.route("/test2/",methods=['GET']) 
+def extract_featuresv2():
+    dir_path  = '../simulation/lfw_funneled'   #A changer par le lien du file train
+    listDir = sorted(os.listdir(dir_path))#glob.glob(dir_path)
+    name=listDir[:1000]
+    L_images=[]
+    for d in listDir:
+        listFiles = sorted(os.listdir(dir_path+'/'+d))
+        if 'desktop.ini' in listFiles:
+            listFiles.remove('desktop.ini')
+        if(len(L_images)<1000):
+            L_images.append(listFiles)
+        else:
+            break
+    L_features=[[]]*1000
+    for i in range (len(L_images)):
+        for j in range(len(L_images[i])):
+            print(preprocess_image("../simulation/lfw_funneled/" + name[i] +"/"+L_images[i][j]))
+            vec=vgg_face_descriptor.predict(preprocess_image("../simulation/lfw_funneled/" + name[i] +"/"+L_images[i][j]))[0,:]
+            L_features[i].append(vec)
+    np.save('features2.npy', L_features, allow_pickle=True)
+    print(True)
+    return(True)
+
 @app.route("/morph/",methods=['GET'])   
 def morphing():
     import os
     import shutil
-    shutil.rmtree('images/aligned_images/')
-    os.mkdir('images/aligned_images/')
+    
     os.system('"python ../stylegan2/align_images.py images/raw_images/ images/aligned_images/"')
     from distutils.dir_util import copy_tree
     print('laucnh')
     # copy subdirectory example
     from_directory = "images/aligned_images/"
-    to_directory = "aligned_images_B/"
+    to_directory = "images/aligned_images_B/"
+    shutil.rmtree('images/aligned_images_B')
+    shutil.rmtree('images/generated_images_no_tiled')
+    os.mkdir('images/aligned_images_B')
+    os.mkdir('images/generated_images_no_tiled')
 
     copy_tree(from_directory, to_directory)
-    os.system('"python ../stylegan2/project_images.py aligned_images_B/ generated_images_no_tiled/ --no-tiled"')
-    return("1")
+    os.system('"python ../stylegan2/project_images.py ' +'images/aligned_images_B/ images/generated_images_no_tiled/ --no-tiled"')
+    L= os.listdir('images/generated_images_no_tiled/')
+    for i in L:
+        if i.split('.')[-1] != "png":
+            L.remove(i)
+    shutil.copyfile('images/generated_images_no_tiled/' +L[0] ,"static/files/" +L[0])
+    print(L)
+    return({'path_to_file' : "static/files/" +L[0]})
+
+
+
+def similarity(req_image):
+  cosinsim=[]
+  path=req_image
+  req_representation = vgg_face_descriptor.predict(preprocess_image('%s' % (path)))[0,:] 
+  for i in range (len(L_images)):
+    for j in range(len(L_images[i])):
+      cosin=findCosineSimilarity(req_representation, L_features[i][j])    #A changer (deuxieme path)
+      cosinsim.append((cosin,i,j))
+  cosinsim.sort(key = lambda x: x[0])
+  print(cosinsim)
+  print(L_images[cosinsim[0][1]])
+  print(name[cosinsim[0][1]])
+  img = Image.open("/content/drive/MyDrive/projet partagé/simulation/lfw_funneled/" + name[cosinsim[0][1]] +"/"+L_images[cosinsim[0][1]][cosinsim[0][2]])    #A changer
+  return img
+
 
 if __name__ == '__main__':
     app.run()

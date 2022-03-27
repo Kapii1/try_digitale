@@ -1,140 +1,170 @@
 <!DOCTYPE html>
 <html>
-<head>
+  <head>
     <title>Face Retrieval</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-EVSTQN3/azprG1Anm3QDgpJLIm9Nao0Yz1ztcQTwFspd3yD65VohhpuuCOmLASjC" crossorigin="anonymous">
-    <link rel="stylesheet" href="../static/styles/styles.css">
-    <meta charset="UTF-8">
-</head>
-<body>
-<div class="title">
-<h1 id="title">
-    Face Retrieval
-</h1>
-</div>
-
-
-<div id="consigne">
-    Vous voulez savoir à quelle star vous ressemblez ? Il suffit de télécharger une photo de vous ci-dessous et lancer le calcul !
-</div>
-
-
-<div id="upload">
-<input type="file" class="form-control" id="customFile" >
-
-    <div id ='subcontainer-btn'>
-
-        <button id = "btn" type="button" class="btn_face">
-           <span class="btn_face__text">Upload</span>
-        </button>
-        <button id = "Calculer"  class="btn_face">
-            <span class="btn_face__text">Calculer !</span>
-        </button>
-        <button id = "Morph"  class="btn_face">
-            <span class="btn_face__text">Morph !</span>
-        </button>
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css"
+      rel="stylesheet"
+      integrity="sha384-EVSTQN3/azprG1Anm3QDgpJLIm9Nao0Yz1ztcQTwFspd3yD65VohhpuuCOmLASjC"
+      crossorigin="anonymous"
+    />
+    <link rel="stylesheet" href="../static/styles/styles.css" />
+    <meta charset="UTF-8" />
+  </head>
+  <body>
+    <div class="title">
+      <h1 id="title">Face Retrieval</h1>
     </div>
-</div>
 
-<div class="container">
+    <div id="consigne">
+      Vous voulez savoir à quelle star vous ressemblez ? Il suffit de
+      télécharger une photo de vous ci-dessous et lancer le calcul !
+    </div>
 
-<div id="image_1_container" class="embed-responsive-item">
-<img id="image_1">
-</div>
+    <div id="upload">
+      <input type="file" class="form-control" id="customFile" />
 
-<div id="image_2_container" class="embed-responsive-item">
-<img id="image_2">
-</div>
-</div>
-</body>
-<script type="text/javascript" src="https://code.jquery.com/jquery-3.4.1.min.js"></script>
-<script>
-   
-       $(document).ready(function (e) {
-        $('#Calculer').on('click',  function () {
-            document.querySelector("#Calculer").classList.toggle('button--loading')
-            var  test= req_ressemblance()
-            console.log("done")
-        });
-            function req_ressemblance(){
-                fetch('/test/')
-                .then(response=>response.json())
-                .then(data=>{
-                    document.getElementById('image_2').src = data.path_to_file
-                    console.log(data);
-                    document.querySelector("#Calculer").classList.remove('button--loading')
-                }
-                )
-                setTimeout(() => {
-                 var img = document.getElementById('image_2')
-                                 
-                 }, 10000);
+      <div id="subcontainer-btn">
+        <button id="btn" type="button" class="btn_face">
+          <span class="btn_face__text">Upload</span>
+        </button>
+        <button id="Calculer" class="btn_face">
+          <span class="btn_face__text">Calculer !</span>
+        </button>
+        <button id="Morph" class="btn_face">
+          <span class="btn_face__text">Morph !</span>
+        </button>
 
-            };
-        $('#Morph').on('click',  function () {
-            document.querySelector("#Morph").classList.toggle('button--loading')
-            var  test= morph()
-            console.log("done")
-        });
-            function morph(){
-                fetch('/morph/')
-                .then(response=>response.json())
-                .then(data=>{                }
-                )
-                setTimeout(() => {
-                 }, 10000);
+      </div>
+    </div>
 
-            };
+    <div class="container">
+      <div id="image_1_container" class="embed-responsive-item">
+        <img id="image_1" />
+      </div>
 
-            $('#btn').on('click', async function () {
+      <div id="image_2_container">
+        <img id="image_2" />
+      </div>
+    </div>
+    <div id="retriv">
+      <span id="retrieval">
+        
+      </span>
+    </div>
 
-            var doc = await te()
-            console.log("___nom du fichier ___" + doc)            });
+    <div id="Morph_result">
+        <img id="morphing" >
+    </div>
+  </body>
+  <script
+    type="text/javascript"
+    src="https://code.jquery.com/jquery-3.4.1.min.js"
+  ></script>
+  <script>
+    $(document).ready(function (e) {
+      $("#Calculer").on("click", function () {
+        document.querySelector("#Calculer").classList.toggle("button--loading");
+        var test = req_ressemblance();
+        console.log("done");
+      });
+      function req_ressemblance() {
+        fetch("/retrieval/")
+          .then((response) => response.json())
+          .then((data) => {
+            document.getElementById("image_2").src = data.path_to_file;
+            document.getElementById("retrieval").textContent =
+              "Vous ressemblez à " + data.name +" !";
+            console.log(data);
+            document
+              .querySelector("#Calculer")
+              .classList.remove("button--loading");
+          });
+        setTimeout(() => {
+          var img = document.getElementById("image_2");
+        }, 10000);
+      }
 
-        });
+      $("#test2").on("click", function () {
+        document.querySelector("#test2").classList.toggle("button--loading");
+        var test = req_ressemblance2();
+        console.log("done");
+      });
+      function req_ressemblance2() {
+        fetch("/test2/")
+          .then((response) => response.json())
+          .then((data) => {
+            console.log(data);
+            document.querySelector("#test2").classList.remove("button--loading");
+          });
+      }
+      $("#Morph").on("click", function () {
+        document.querySelector("#Morph").classList.toggle("button--loading");
+        var test = morph();
+        console.log("done");
+      });
+      function morph() {
+        fetch("/morph/")
+          .then((response) => response.json())
+          .then((data) => {
+              document.getElementById('morphing').src = data.path_to_file
+              document.querySelector("#Morph").classList.remove("button--loading");
+          });
+        setTimeout(() => {}, 10000);
+      }
 
-        function te() {
-                var form_data = new FormData();
-                var ins = document.getElementById('customFile').files.length;
-                 
-                if(ins == 0) {
-                    $('#msg').html('<span style="color:red">Select at least one file</span>');
-                    return;
-                }
-                 
-                for (var x = 0; x < ins; x++) {
-                    form_data.append("files[]", document.getElementById('customFile').files[x]);
-                }
-               
-                $.ajax({
-                    url: '/upload', 
-                    dataType: 'json',
-                    cache: false,
-                    contentType: false,
-                    processData: false,
-                    data: form_data,
-                    type: 'post',
-                    success: function (response) { 
-                        $('#msg').html('');
-                        $.each(response, function (key, data) {                         
-                            if(key !== 'message') {
-                                $('#msg').append(key + ' -> ' + data + '<br/>');
-                            } else {
-                                $('#msg').append(data + '<br/>');
-                            }
-                        })
-                        var resp = response;
-                        var img = document.getElementById('image_1');
-                        img.src = resp.path_to_file
-                    },
-    
-                    error: function (response) {
-                        $('#msg').html(response.message); 
-                    }
-                    
-                });
-                console.log("done")
-                return document.getElementById('customFile').files[0].name
-        };
-</script>
+      $("#btn").on("click", async function () {
+        var doc = await te();
+        console.log("___nom du fichier ___" + doc);
+      });
+    });
+
+    function te() {
+      var form_data = new FormData();
+      var ins = document.getElementById("customFile").files.length;
+
+      if (ins == 0) {
+        $("#msg").html(
+          '<span style="color:red">Select at least one file</span>'
+        );
+        return;
+      }
+
+      for (var x = 0; x < ins; x++) {
+        form_data.append(
+          "files[]",
+          document.getElementById("customFile").files[x]
+        );
+      }
+
+      $.ajax({
+        url: "/upload",
+        dataType: "json",
+        cache: false,
+        contentType: false,
+        processData: false,
+        data: form_data,
+        type: "post",
+        success: function (response) {
+          $("#msg").html("");
+          $.each(response, function (key, data) {
+            if (key !== "message") {
+              $("#msg").append(key + " -> " + data + "<br/>");
+            } else {
+              $("#msg").append(data + "<br/>");
+            }
+          });
+          var resp = response;
+          var img = document.getElementById("image_1");
+          img.src = resp.path_to_file;
+        },
+
+        error: function (response) {
+          $("#msg").html(response.message);
+        },
+      });
+      console.log("done");
+      return document.getElementById("customFile").files[0].name;
+    }
+  </script>
 </html>

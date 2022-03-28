@@ -40,13 +40,13 @@ Il y a trois routes que nous devrons implémenter :
 
 
 
-### /upload
+## /upload
 
 Tout d'abord nous devons dire à python que nous allons utiliser les variables globales. Le premier `if` vérifie s'il y a bien un 
 fichier envoyé. Si tout est bon, on demande d'avoir tous les fichiers. On va tous les stocker dans `UPLOAD_FOLDER`. Et enfin 
 on gère la réponse.
 
-###\retrieval
+##\retrieval
 
 Le retrieval va fonctionner de la sorte :
 
@@ -59,7 +59,7 @@ Le retrieval va fonctionner de la sorte :
 - Ensuite on envoie la photo qui ressemble le plus dans le dossier `static`
 - On retourne un json `{'path_to_file': path ,'name': Name}`
 
-###\morphing
+##\morphing
 
 Le **morphing** va être lancer en utilisant une ligne de commande :
 

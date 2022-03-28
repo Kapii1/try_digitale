@@ -60,6 +60,7 @@ Le retrieval va fonctionner de la sorte :
 - On retourne un json `{'path_to_file': path ,'name': Name}`
 
 ###\morphing
+
 Le **morphing** va être lancer en utilisant une ligne de commande :
 
 `os.system('"python ../stylegan2/align_images.py images/raw_images/ images/aligned_images/"')`

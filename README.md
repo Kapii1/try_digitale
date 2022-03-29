@@ -1,3 +1,4 @@
+
 # try_digitale
 
 
@@ -65,8 +66,35 @@ Le **morphing** va être lancer en utilisant une ligne de commande :
 
 `os.system('"python ../stylegan2/align_images.py images/raw_images/ images/aligned_images/"')`
 
+La fonction **align_images** permet de centrer et cropper le visage dans l'image de l'entrée. Elle se base sur un detecteur de landmarks pré-entraîné pour faire ceci.
+
+
 Puis la deuxieme partie du morphing pour avoir le résultat final : 
 
 `os.system('"python ../stylegan2/project_images.py ' +'images/aligned_images_B/ images/generated_images_no_tiled/ --no-tiled"')`
+
+La fonction **project_images** permet de faire la projection et prend une liste de paramètre : 
+
+    'src_dir', 'Directory with aligned images for projection')
+    'dst_dir', 'Output directory')
+    '--network-pkl''StyleGAN2 network pickle filename')
+    '--vgg16-pkl''VGG16 network pickle filename')
+    '--num-steps': Number of optimization steps')
+    '--initial-learning-rate' 
+    '--initial-noise-factor' 
+    '--verbose' : 
+    '--tiled', : projection en (1,512)
+    '--no-tiled' :projection en (18,512)
+
+
+La projection se fait en concaténant tous les 18 sorties du réseau, ceci nous permet de gagner en détails par rapport à la projection en prenant seulement la dernière sortie.
+
+
+
+Dans ce qui suit, nous supposons que les images réelles ont été projetées, de sorte que nous avons accès à leurs codes latents, de forme (1, 512) )ou (18, 512) selon la méthode de projection.
+
+
+
+
 
 Et enfin on copie le fichier final et on l'envoie en réponse.

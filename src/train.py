@@ -30,7 +30,8 @@ from functions import preprocess_image, verifyFace, findCosineSimilarity
 import shutil
 from werkzeug.utils import secure_filename
 import scipy
- 
+
+from sklearn.preprocessing import normalize
 from flask_ngrok import run_with_ngrok
 
 sess = tf.Session()
@@ -93,11 +94,10 @@ def preprocess_image(image_path):
     img = preprocess_input(img)
     return img
 def main():
-    vgg_face_descriptor = Model(inputs=model.layers[0].input, outputs=model.layers[-2].output)
+    vgg_face_descriptor = Model(inputs=model.layers[0].input, outputs=model.layers[-4].output)
     dir_path  = '../simulation/lfw_funneled'   #A changer par le lien du file train
     listDir = sorted(os.listdir(dir_path))#glob.glob(dir_path)
     name=listDir[:200]
-    print(name)
     L_images=[]
     for d in listDir:
         listFiles = sorted(os.listdir(dir_path+'/'+d))
@@ -108,12 +108,14 @@ def main():
         else:
             break
     L_features=[[]]*200
+    L_features_2 = []
+    im_index = []
     for i in range (len(L_images)):
         for j in range(len(L_images[i])):
             try:
                 if 'zoom' not in L_images[i][j]:
                     img_zoom=DeepFace.detectFace(img_path="../simulation/lfw_funneled/" + name[i] +"/"+L_images[i][j],detector_backend="opencv")
-                    im =Image.fromarray((img_zoom * 255).astype(np.uint8))
+                    im = Image.fromarray((img_zoom * 255).astype(np.uint8))
                     im.save("../simulation/lfw_funneled/" + name[i] +"/"+L_images[i][j][:-4]+"_zoom"+".jpg") 
                     name_img= "../simulation/lfw_funneled/" + name[i] +"/"+L_images[i][j][:-4]+"_zoom"+".jpg"
             except:
@@ -121,10 +123,23 @@ def main():
             with graph.as_default():
                 set_session(sess)
                 vec=vgg_face_descriptor.predict(preprocess_image(name_img))[0,:]
+                
+            
             L_features[i].append(vec)
-        print(i/len(L_images))
-    np.save('features3.npy', L_features, allow_pickle=True)
-    print(True)
+
+            L_features_2.append(vec[0,0,:])
+            #toto=np.array(L_features_2)
+            #print(toto.shape)
+            im_index.append([i,j])
+    
+
+    toto= normalize(np.array(L_features_2))
+    print(toto.shape,np.sum(np.power(toto,2.0),0), np.sum(np.power(toto,2.0),1))
+    L_features_2= normalize(np.array(L_features_2))
+
+    np.save('image_index.npy',np.array(im_index))
+    np.save('features3.npy', L_features_2, allow_pickle=True)
+
 
 def extract_features():
     vgg_face_descriptor = Model(inputs=model.layers[0].input, outputs=model.layers[-2].output)
